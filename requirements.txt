@@ -1,0 +1,7 @@
+numpy==1.19.5
+scikit-learn==0.24.1
+csaps==1.0.3
+ujson==4.0.2
+tqdm==4.59.0
+opencv-python>=4.1.2
+simple-pid
