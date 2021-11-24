@@ -362,6 +362,28 @@ def calcul_speed(steer_angle, max_speed, max_angle):
     #     return max_speed - (max_speed/max_angle)*steer_angle
     return max_speed 
 
+def get_speed(angle, predicted_speed, current_speed, MAX_SPEED):
+    if (angle >= 17 and angle < 26) or  (angle > -26 and  angle <= -17):
+        if current_speed < 35:
+            predicted_speed += 150
+            return predicted_speed
+
+        if current_speed > (predicted_speed + 20):
+            predicted_speed -= 150
+            return predicted_speed
+
+    if (angle >= 13 and angle < 17) or  (angle > -17 and  angle <= -13):
+        if current_speed < 25:
+            predicted_speed += 150
+            return predicted_speed
+
+
+
+    if current_speed == 0:
+        current_speed = 1
+    ratio = predicted_speed/current_speed
+    return np.clip(predicted_speed * ratio, -MAX_SPEED, MAX_SPEED)
+
 def clear_StatusObjs(StatusObjs):
     list_result = []
     for obj in StatusObjs:

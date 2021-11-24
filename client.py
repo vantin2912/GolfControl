@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import os
 
-from src.util import get_steer_angle, calcul_speed, adjust_fits
+from src.util import get_steer_angle, calcul_speed, adjust_fits, get_speed
 from net import Net
 from simple_pid import PID
 
@@ -19,7 +19,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # Define the port on which you want to connect
 PORT = 54321
 # connect to the server on local computer
-s.connect(('host.docker.internal', PORT))
+s.connect(('127.0.0.1', PORT))
 
 pre = time.time()
 
@@ -33,13 +33,13 @@ using_visualization = False
 if using_pid:
     kp = 3
     ki = 0
-    kd = 1
+    kd = 0.7
 
     pid = PID(kp, ki, kd, setpoint= 0)
     pid.output_limits = (-25, 25)
 
 
-MAX_SPEED = 120
+MAX_SPEED = 150
 MAX_ANGLE = 25
 
 statistic_path = r'dataset/statistic'
@@ -57,6 +57,23 @@ if using_statistic:
     angle_buffer = []  
     pid_angle_buffer = [] 
     speed_buffer = []
+
+class SimpleKalmanFilter:
+  def __init__(self, mea_e, est_e, q):
+    self.mea_e = mea_e
+    self.est_e = est_e
+    self.q = q
+    self.last_est = 0
+  
+  def update(self, mea):
+    kalman_gain = self.est_e/(self.est_e + self.mea_e)
+    current_est = self.last_est + kalman_gain*(mea - self.last_est)
+
+    self.est_e = (1.0 - kalman_gain) * self.est_e + np.fabs(self.last_est - current_est) * self.q
+    self.last_est = current_est
+    return current_est
+
+km = SimpleKalmanFilter(1, 5, 5)
 
 try:
     while True:
@@ -92,17 +109,23 @@ try:
             image_points_result = net.get_image_points()
             angle = get_steer_angle(fits)
 
+            
 
             if using_pid:
                 out_pid = pid(-(angle))
-                print("out_pid: ", out_pid)
-                speed = calcul_speed(out_pid, MAX_SPEED, MAX_ANGLE)
+              
+                predicted_speed = calcul_speed(out_pid, MAX_SPEED, MAX_ANGLE)
+                speed = get_speed(out_pid, predicted_speed, float(current_speed), MAX_SPEED)
+
+                out_pid = km.update(out_pid)
                 Control(out_pid ,speed)
 
             else:
-                speed = calcul_speed(angle, MAX_SPEED, MAX_ANGLE)
+                predicted_speed = calcul_speed(angle, MAX_SPEED, MAX_ANGLE)
+                speed = get_speed(angle, predicted_speed, float(current_speed), MAX_SPEED)
                 Control(angle ,speed)
 
+            print("current_speed, predicted_speed, speed: ", float(current_speed), predicted_speed, speed)
             print(angle, speed)
 
             if using_statistic:
