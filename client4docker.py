@@ -28,7 +28,7 @@ sendBack_Speed = 0
 
 using_pid = True
 using_statistic = False
-using_visualization = False
+using_visualization = True
 
 if using_pid:
     kp = 3
@@ -46,7 +46,7 @@ statistic_path = r'dataset/statistic'
 
 net = Net()
 p = Parameters()
-net.load_model(r'dataset/2lane_lane_detection_network.pkl')
+net.load_model(r'dataset/best.pkl')
 
 def Control(angle, speed):
     global sendBack_angle, sendBack_Speed

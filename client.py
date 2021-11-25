@@ -39,14 +39,14 @@ if using_pid:
     pid.output_limits = (-25, 25)
 
 
-MAX_SPEED = 150
+MAX_SPEED = 100
 MAX_ANGLE = 25
 
 statistic_path = r'dataset/statistic'
 
 net = Net()
 p = Parameters()
-net.load_model(r'dataset/2lane_lane_detection_network.pkl')
+net.load_model(r'dataset/best5.pkl')
 
 def Control(angle, speed):
     global sendBack_angle, sendBack_Speed
