@@ -39,14 +39,14 @@ if using_pid:
     pid.output_limits = (-25, 25)
 
 
-MAX_SPEED = 100
+MAX_SPEED = 120
 MAX_ANGLE = 25
 
 statistic_path = r'dataset/statistic'
 
 net = Net()
 p = Parameters()
-net.load_model(r'dataset/best5.pkl')
+net.load_model(r'dataset/speed_120.pkl')
 
 def Control(angle, speed):
     global sendBack_angle, sendBack_Speed
@@ -74,6 +74,8 @@ class SimpleKalmanFilter:
     return current_est
 
 km = SimpleKalmanFilter(1, 5, 5)
+# count = 0
+print("SIMPLE WITH OUT LE")
 
 try:
     while True:
@@ -95,6 +97,7 @@ try:
         data = s.recv(100000)
         
         try:
+            start = time.time()
             image = cv2.imdecode(np.frombuffer(data, np.uint8), -1)
 
             image = image[160: 340, :]
@@ -125,8 +128,8 @@ try:
                 speed = get_speed(angle, predicted_speed, float(current_speed), MAX_SPEED)
                 Control(angle ,speed)
 
-            print("current_speed, predicted_speed, speed: ", float(current_speed), predicted_speed, speed)
-            print(angle, speed)
+            # print("current_speed, predicted_speed, speed: ", float(current_speed), predicted_speed, speed)
+            # print(angle, speed)
 
             if using_statistic:
                 angle_buffer.append(angle)
@@ -138,8 +141,11 @@ try:
                 cv2.imshow("points", image_points_result)
                 cv2.imshow("mask", mask)
                 cv2.imshow("IMG", image)
-
                 cv2.waitKey(1)
+
+            print("Please, stay in the line")
+            print("FPS: ", 1.0/(time.time() - start))
+            
         except Exception as er:
             print(er)
             pass

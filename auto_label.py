@@ -59,10 +59,10 @@ def convert_to_original_size(x, y):
 if __name__ == "__main__":
     net = Net()
     p = Parameters()
-    net.load_model("dataset/best5.pkl")
+    net.load_model("dataset/best.pkl")
 
     #labelFile = open("dataset/train/overfit.json", "w")
-    root = r"C:\Users\Asus\Desktop\AI\AICAR\New-map\overfit_data\\"
+    root = r"data_round1_part_4/"
 
     for imagePath in os.listdir(root):
         if "desktop" in imagePath:
