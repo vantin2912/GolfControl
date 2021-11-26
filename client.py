@@ -77,9 +77,63 @@ km = SimpleKalmanFilter(1, 5, 5)
 # count = 0
 print("SIMPLE WITH OUT LE")
 
+
+print("OOOOOOOOOO000000KKKKK000000KXXXXXXXXNXXNNNXXXXXXXX\n\
+xxxxkkkkkkkOOOOkxddddooooodddxxkO0XXNXXNNNNNNNNNNN\n\
+xxxkkkkkkkkkxdolcccccccllllcc::clodk0KXNNNNNNNNNNX\n\
+xkkkkkkkkxdlcccllooloooddddollcc::::ldkKXNNNNNNNNX\n\
+kkkkkkkxollllloodddxxkkkxxkkkkkxdoc:::cokKXXNNNNNX\n\
+kkkkkkollcloddxkkOOO00OkOOOOOO00Okxdo:;cld0XXXXXNX\n\
+kkkkkocllodddk0OOOOOxc''coxO00KK0OOOkxlccloOXXXXXX\n\
+kkOkoclloxO0OOO000d;......':dOKK00K0OOkdlcloOXXXXX\n\
+OOkdclloxO0OOO00x:...''.''...;x0O0K00OOkxocld0XXXX\n\
+OOklclok00O0000O:.'codxxdol:,.,x000000OOkdllokXXXX\n\
+OOxlcox0K0O000KO:':lddxOxdoc;',dKKKKOOOOOkoloxKXXX\n\
+00xllokKK0O0000k:,:dxxxxoodoc,;xKKK0OOO00kdlld0XXX\n\
+00koodOKX0OOOO0Oo::dOOkdooxkl;cO00K0OO0K0OdolxKXXX\n\
+KKOddxOKKK00OOOOkl:lxxdlclodc;dK0OOOOkO0OkdookKXXX\n\
+KK0kxxk0KXXXK000Odccldxxdool;:d0OOOO0OOOkxood0XXXX\n\
+KKK0kxkOKXXXK00KOdlllooollc::cd0K00K0OOkxdodkKXXXX\n\
+KKXK0kkO0KXXK0Okxoldxkkxxxolc::looxkOOkxdddkKXXXKX\n\
+XXXXXKOOOkxdoooooodxxkkkkkxdoolc::::clddddOKXKXXKK\n\
+XXXXXXKOdodxkxxkkkkkkkkkOOOkkxdddolc:,;lx0XKXXXKKK\n\
+XXXXXXXkldOkdokKKKKK0OOO00000Okxxxdoc:::d0XXKKKKKK\n\
+XXXXXXKdcdkxoox0K0KK00OOO00KK0xoxkdollolckXKXKKKKK\n\
+XNNNXXKoldkOkdoxkxkO0OOOOO0K0Oddkkdllodocd0KKKKKKK\n\
+NNNXNNOllxdxOkdkOxdxkOOOO000Okxxkxdlldxdl:xKKK0000\n\
+XXNNNXd:lolldkxxkoldxkkOO0Okkkxxxdoodxkxl:d0KK0000\n\
+NXNNNNxcoxolloolllldxkOOOOOkkkxxxdoodxkxl;:kK00000\n\
+NNNNXXxcodolllccccldxkkOOOOOkkkkxooodxkxo;;x000000\n\
+NNNNNXd:llloolc;,:codxkOOOOOOOOkdloddxkko:,o000OOO\n\
+XXXXNKo;cclolc;'';cldxkOOOOOOOkdoloooxkOxc,lO0OOOO\n\
+XXXXX0l;:cllc;..,:codxxkkkkOOxdooooodkOOko;ckOOOOO\n\
+XXXXX0c,::;:,...,cldxkkkOOOkxdddddxxxdxxdl;;dOOOkk\n\
+XXXXXKd;''''...,:loddddxkkkxxkxxdoxkkkxxdo;,dOOOkk\n\
+XXKKK0OxooddooloxxxxxxxxdddxkkkkkkO000KKOkxdxkkkkk\n\
+KKOOkkkkkOOkOOOO000OOOOOkxkOkk000000KKKKK000kxxxxk\n\
+0O0KKKK000OkxdddxkkkOO000OOOO0000KKKKXXXXXKKOOOold\n\
+OxxOkkOkxxxxdoooodddddxxO0OkkOkOO0000OOOOOOkOkoclo\n\
+xolloloddoooooooooooddxkO0kxkkxxxxxxxxxxxdddllllcc\n\
+koccccclllllllllodddddxkkkkkOOkkkxxxdddddoooool:cd\n\
+OkdddolloolllcodddddodoodddkkkxkOOkkOOkxkxddlc:cox\n\
+OkkOkxxxdxddooodoodolllllllodxdodxxkO0OkOOkkddooxx\n\
+xxkkkddxddoooxxxxkkxdxxxddddxkkkkkkkkkxxxxkxxxkxxk\n\
+")
+
+print("Please, stay on the road")
+from playsound import playsound
+
+def play_music():
+    playsound(r'music.mp3')
+
+from threading import Thread
+
+Thread(target= play_music).start()
+
 try:
     while True:
         # Send data
+        #start_time = time.time()
         message_getState = bytes("0", "utf-8")
         s.sendall(message_getState)
         state_date = s.recv(100)
@@ -97,7 +151,6 @@ try:
         data = s.recv(100000)
         
         try:
-            start = time.time()
             image = cv2.imdecode(np.frombuffer(data, np.uint8), -1)
 
             image = image[160: 340, :]
@@ -141,17 +194,15 @@ try:
                 cv2.imshow("points", image_points_result)
                 cv2.imshow("mask", mask)
                 cv2.imshow("IMG", image)
-                cv2.waitKey(1)
+                cv2.waitKey(1)   
 
-            print("Please, stay in the line")
-            print("FPS: ", 1.0/(time.time() - start))
-            
+            #print("FPS: ", 1.0/(time.time() - start_time))
+
         except Exception as er:
             print(er)
             pass
+
           
-
-
 finally:
 
     if using_statistic:
