@@ -3,15 +3,14 @@ import socket
 import time
 import cv2
 import numpy as np
-import os
+
 
 from src.util import get_steer_angle, calcul_speed, adjust_fits, get_speed
 from net import Net
 from simple_pid import PID
-
+from utils.traffic_sign_general import *
 
 from src.parameters import Parameters
-from src.processing_image import warp_image
 
 # Create a socket object
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -27,7 +26,6 @@ sendBack_angle = 0
 sendBack_Speed = 0
 
 using_pid = True
-using_statistic = False
 using_visualization = False
 
 if using_pid:
@@ -39,24 +37,20 @@ if using_pid:
     pid.output_limits = (-25, 25)
 
 
-MAX_SPEED = 120
+MAX_SPEED = 90
 MAX_ANGLE = 25
 
 statistic_path = r'dataset/statistic'
 
 net = Net()
 p = Parameters()
-net.load_model(r'dataset/speed_120.pkl')
+net.load_model(r'dataset/3_lane_better.pkl')
 
 def Control(angle, speed):
     global sendBack_angle, sendBack_Speed
     sendBack_angle = angle
     sendBack_Speed = speed
 
-if using_statistic:
-    angle_buffer = []  
-    pid_angle_buffer = [] 
-    speed_buffer = []
 
 class SimpleKalmanFilter:
   def __init__(self, mea_e, est_e, q):
@@ -74,63 +68,43 @@ class SimpleKalmanFilter:
     return current_est
 
 km = SimpleKalmanFilter(1, 5, 5)
-# count = 0
-print("SIMPLE WITH OUT LE")
 
-print("OOOOOOOOOO000000KKKKK000000KXXXXXXXXNXXNNNXXXXXXXX\n\
-xxxxkkkkkkkOOOOkxddddooooodddxxkO0XXNXXNNNNNNNNNNN\n\
-xxxkkkkkkkkkxdolcccccccllllcc::clodk0KXNNNNNNNNNNX\n\
-xkkkkkkkkxdlcccllooloooddddollcc::::ldkKXNNNNNNNNX\n\
-kkkkkkkxollllloodddxxkkkxxkkkkkxdoc:::cokKXXNNNNNX\n\
-kkkkkkollcloddxkkOOO00OkOOOOOO00Okxdo:;cld0XXXXXNX\n\
-kkkkkocllodddk0OOOOOxc''coxO00KK0OOOkxlccloOXXXXXX\n\
-kkOkoclloxO0OOO000d;......':dOKK00K0OOkdlcloOXXXXX\n\
-OOkdclloxO0OOO00x:...''.''...;x0O0K00OOkxocld0XXXX\n\
-OOklclok00O0000O:.'codxxdol:,.,x000000OOkdllokXXXX\n\
-OOxlcox0K0O000KO:':lddxOxdoc;',dKKKKOOOOOkoloxKXXX\n\
-00xllokKK0O0000k:,:dxxxxoodoc,;xKKK0OOO00kdlld0XXX\n\
-00koodOKX0OOOO0Oo::dOOkdooxkl;cO00K0OO0K0OdolxKXXX\n\
-KKOddxOKKK00OOOOkl:lxxdlclodc;dK0OOOOkO0OkdookKXXX\n\
-KK0kxxk0KXXXK000Odccldxxdool;:d0OOOO0OOOkxood0XXXX\n\
-KKK0kxkOKXXXK00KOdlllooollc::cd0K00K0OOkxdodkKXXXX\n\
-KKXK0kkO0KXXK0Okxoldxkkxxxolc::looxkOOkxdddkKXXXKX\n\
-XXXXXKOOOkxdoooooodxxkkkkkxdoolc::::clddddOKXKXXKK\n\
-XXXXXXKOdodxkxxkkkkkkkkkOOOkkxdddolc:,;lx0XKXXXKKK\n\
-XXXXXXXkldOkdokKKKKK0OOO00000Okxxxdoc:::d0XXKKKKKK\n\
-XXXXXXKdcdkxoox0K0KK00OOO00KK0xoxkdollolckXKXKKKKK\n\
-XNNNXXKoldkOkdoxkxkO0OOOOO0K0Oddkkdllodocd0KKKKKKK\n\
-NNNXNNOllxdxOkdkOxdxkOOOO000Okxxkxdlldxdl:xKKK0000\n\
-XXNNNXd:lolldkxxkoldxkkOO0Okkkxxxdoodxkxl:d0KK0000\n\
-NXNNNNxcoxolloolllldxkOOOOOkkkxxxdoodxkxl;:kK00000\n\
-NNNNXXxcodolllccccldxkkOOOOOkkkkxooodxkxo;;x000000\n\
-NNNNNXd:llloolc;,:codxkOOOOOOOOkdloddxkko:,o000OOO\n\
-XXXXNKo;cclolc;'';cldxkOOOOOOOkdoloooxkOxc,lO0OOOO\n\
-XXXXX0l;:cllc;..,:codxxkkkkOOxdooooodkOOko;ckOOOOO\n\
-XXXXX0c,::;:,...,cldxkkkOOOkxdddddxxxdxxdl;;dOOOkk\n\
-XXXXXKd;''''...,:loddddxkkkxxkxxdoxkkkxxdo;,dOOOkk\n\
-XXKKK0OxooddooloxxxxxxxxdddxkkkkkkO000KKOkxdxkkkkk\n\
-KKOOkkkkkOOkOOOO000OOOOOkxkOkk000000KKKKK000kxxxxk\n\
-0O0KKKK000OkxdddxkkkOO000OOOO0000KKKKXXXXXKKOOOold\n\
-OxxOkkOkxxxxdoooodddddxxO0OkkOkOO0000OOOOOOkOkoclo\n\
-xolloloddoooooooooooddxkO0kxkkxxxxxxxxxxxdddllllcc\n\
-koccccclllllllllodddddxkkkkkOOkkkxxxdddddoooool:cd\n\
-OkdddolloolllcodddddodoodddkkkxkOOkkOOkxkxddlc:cox\n\
-OkkOkxxxdxddooodoodolllllllodxdodxxkO0OkOOkkddooxx\n\
-xxkkkddxddoooxxxxkkxdxxxddddxkkkkkkkkkxxxxkxxxkxxk\n\
-")
-print("Please, stay on the road")
-from playsound import playsound
+traffic_sign_model, _ = load_model(r'dataset/best.pt')
 
-def play_music():
-    playsound(r'music.mp3')
+save_img_dir = r'images_test'
+count = 336
 
-from threading import Thread
+# 'do_not_go_straight', 'do_not_turn_left', 'do_not_turn_right', 'go_straight', 'turn_left', 'turn_right'
+AREA_THRESHOLD = np.array([3400, 2500, 3000, 3000, 3000, 3000])
 
-Thread(target= play_music).start()
+HANDLER_VARIABLE_HIGH_SPEED = np.array([[0, 15, 1],        # 'do_not_go_straight'
+                             [10, 15, 1],        # 'do_not_turn_left'
+                             [10, -15, 1],       # 'do_not_turn_right'
+                             [50, 0, 2],        # 'go_straight'
+                             [-150, -24, 1],    # 'turn_left'
+                             [-150, 24, 1]])    # 'turn_right'
+
+
+HANDLER_VARIABLE_LOW_SPEED = np.array([[20, 15, 1],        # 'do_not_go_straight'
+                             [20, 15, 1],        # 'do_not_turn_left'
+                             [20, -15, 1],       # 'do_not_turn_right'
+                             [50, 0.2, 1.5],        # 'go_straight'
+                             [0, -20, 1],    # 'turn_left'
+                             [0, 20, 1]])    # 'turn_right'
+
+
+
+def handler(speed, angle, time_delay):
+    Control(angle , speed)
+    message = bytes(f"1 {sendBack_angle} {sendBack_Speed}", "utf-8")
+    s.sendall(message)
+    s.recv(100000)
+    time.sleep(time_delay)
 
 try:
     while True:
         # Send data
+        start_time = time.time()
         message_getState = bytes("0", "utf-8")
         s.sendall(message_getState)
         state_date = s.recv(100)
@@ -148,7 +122,31 @@ try:
         data = s.recv(100000)
         
         try:
-            image = cv2.imdecode(np.frombuffer(data, np.uint8), -1)
+            image = cv2.imdecode(np.frombuffer(data, np.uint8), -1)           
+            traffic_sign_image = image[0: 140, 160 : 600]
+            pred = detect(traffic_sign_image, traffic_sign_model, imgsz = (320, 320), conf_thres = 0.9  , iou_thres = 0.45)
+            boxes = get_boxes(pred)
+     
+            confidence = 0 
+            box = None
+            area = 0
+
+            for i, box in enumerate(boxes):
+                if box[4] > confidence:
+                    box = box
+                    confidence = box[4]
+       
+            if confidence != 0:
+                area = calculate_area(box)
+                print(area)
+                visualize_img(traffic_sign_image, box)
+                if AREA_THRESHOLD[int(box[5])] < area:
+                    if float(current_speed) > 40:
+                        handler_speed, handler_angle, time_delay = HANDLER_VARIABLE_HIGH_SPEED[int(box[5])]
+                    else:
+                        handler_speed, handler_angle, time_delay = HANDLER_VARIABLE_LOW_SPEED[int(box[5])]
+                    handler(handler_speed, handler_angle, time_delay)
+                    continue
 
             image = image[160: 340, :]
 
@@ -161,59 +159,36 @@ try:
             mask = net.get_mask_lane(fits)
             image_points_result = net.get_image_points()
             angle = get_steer_angle(fits)
-
             
 
             if using_pid:
                 out_pid = pid(-(angle))
-              
                 predicted_speed = calcul_speed(out_pid, MAX_SPEED, MAX_ANGLE)
-                speed = get_speed(out_pid, predicted_speed, float(current_speed), MAX_SPEED)
-
+                speed = get_speed(out_pid, predicted_speed, float(current_speed), MAX_SPEED, area) 
                 out_pid = km.update(out_pid)
                 Control(out_pid ,speed)
 
             else:
                 predicted_speed = calcul_speed(angle, MAX_SPEED, MAX_ANGLE)
-                speed = get_speed(angle, predicted_speed, float(current_speed), MAX_SPEED)
+                speed = get_speed(angle, predicted_speed, float(current_speed), MAX_SPEED, area)
                 Control(angle ,speed)
 
-            # print("current_speed, predicted_speed, speed: ", float(current_speed), predicted_speed, speed)
-            # print(angle, speed)
-
-            if using_statistic:
-                angle_buffer.append(angle)
-                speed_buffer.append(speed)
-                if using_pid:
-                    pid_angle_buffer.append(out_pid)
-
             if using_visualization:
+                cv2.imshow("traffic_sign_image", traffic_sign_image)
                 cv2.imshow("points", image_points_result)
                 cv2.imshow("mask", mask)
                 cv2.imshow("IMG", image)
-                cv2.waitKey(1)    
+                cv2.waitKey(1)   
+
+            print("FPS: ", 1.0/(time.time() - start_time))
+
+
+
         except Exception as er:
             print(er)
             pass
+
           
-
 finally:
-
-    if using_statistic:
-        angle_buffer = np.array(angle_buffer)
-        pid_angle_buffer = np.array(pid_angle_buffer)
-        speed_buffer = np.array(speed_buffer)
-
-        if using_pid:
-            save_name = str(kp) + "_" + str(ki) + "_" + str(kd) + "_" + str(MAX_SPEED) + "_" 
-        else:
-            save_name = str(MAX_SPEED) + "_" 
-        save_name = save_name.replace('.', '-')
-        save_name = os.path.join(statistic_path, save_name)
-
-        np.save(save_name + 'angle.npy', angle_buffer)
-        np.save(save_name + 'pid_angle_buffer.npy', pid_angle_buffer)
-        np.save(save_name + 'speed_buffer.npy', speed_buffer)
-
     print('closing socket')
     s.close()
