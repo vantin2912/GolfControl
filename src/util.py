@@ -147,7 +147,7 @@ def get_steer_angle(fits):
 
     elif len_fit >= 2:
         y = 20
-        x = (np.poly1d(fits[-1])(y) + np.poly1d(fits[0])(y)) // 2
+        x = (np.poly1d(fits[-1])(y) + np.poly1d(fits[-2])(y)) // 2
         return_value = errorAngle((x,y))
         
         #update point in lane
@@ -237,7 +237,7 @@ def sort_along_x(x, y):
     values_x = np.array([np.poly1d(fit)(min_y) for fit in fits ])
     # print(values_x)
     order = np.argsort(values_x)
-    print(order)
+
     return np.array(x)[order], np.array(y)[order]
 
 def sort_batch_along_y(target_lanes, target_h):
@@ -362,7 +362,19 @@ def calcul_speed(steer_angle, max_speed, max_angle):
     #     return max_speed - (max_speed/max_angle)*steer_angle
     return max_speed * 0.8
 
-def get_speed(angle, predicted_speed, current_speed, MAX_SPEED):
+def get_speed(angle, predicted_speed, current_speed, MAX_SPEED, area):
+
+    if area  < 200:
+        predicted_speed = predicted_speed
+    elif area < 500:
+        predicted_speed = 30
+    elif area < 1000:
+        predicted_speed = 20
+    elif area < 1500:
+        predicted_speed = 10
+    else:
+        predicted_speed = 5
+        
     if (angle >= 17 and angle < 26) or  (angle > -26 and  angle <= -17):
         if current_speed < 35:
             predicted_speed += 150
@@ -376,8 +388,6 @@ def get_speed(angle, predicted_speed, current_speed, MAX_SPEED):
         if current_speed < 25:
             predicted_speed += 150
             return np.clip(predicted_speed, -MAX_SPEED, MAX_SPEED)
-
-
 
     if current_speed == 0:
         current_speed = 1
