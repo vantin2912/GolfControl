@@ -90,7 +90,7 @@ HANDLER_VARIABLE_LOW_SPEED = np.array([[20, 15, 1],        # 'do_not_go_straight
                              [20, -15, 1],       # 'do_not_turn_right'
                              [50, 0.2, 1],        # 'go_straight'
                              [0, -20, 1],    # 'turn_left'
-                             [0, 22, 1]])    # 'turn_right'
+                             [0, 20, 1]])    # 'turn_right'
 
 
 
@@ -104,7 +104,6 @@ def handler(speed, angle, time_delay):
 try:
     while True:
         # Send data
-        start_time = time.time()
         message_getState = bytes("0", "utf-8")
         s.sendall(message_getState)
         state_date = s.recv(100)
@@ -182,7 +181,7 @@ try:
                 cv2.imshow("IMG", image)
                 cv2.waitKey(1)   
 
-            print("FPS: ", 1.0/(time.time() - start_time))
+           
 
 
 
