@@ -75,20 +75,20 @@ save_img_dir = r'images_test'
 count = 336
 
 # 'do_not_go_straight', 'do_not_turn_left', 'do_not_turn_right', 'go_straight', 'turn_left', 'turn_right'
-AREA_THRESHOLD = np.array([3400, 2500, 3000, 3000, 3000, 3000])
+AREA_THRESHOLD = np.array([3400, 2200, 3000, 3000, 3000, 3000])
 
 HANDLER_VARIABLE_HIGH_SPEED = np.array([[0, 15, 1],        # 'do_not_go_straight'
                              [10, 15, 1],        # 'do_not_turn_left'
                              [10, -15, 1],       # 'do_not_turn_right'
-                             [50, 0, 2],        # 'go_straight'
-                             [-150, -24, 1],    # 'turn_left'
-                             [-150, 24, 1]])    # 'turn_right'
+                             [50, 0, 1.2],        # 'go_straight'
+                             [-150, -25, 1],    # 'turn_left'
+                             [-150, 25, 1.6]])    # 'turn_right'
 
 
 HANDLER_VARIABLE_LOW_SPEED = np.array([[20, 15, 1],        # 'do_not_go_straight'
                              [20, 15, 1],        # 'do_not_turn_left'
                              [20, -15, 1],       # 'do_not_turn_right'
-                             [50, 0.2, 1.5],        # 'go_straight'
+                             [50, 0.2, 1],        # 'go_straight'
                              [0, -20, 1],    # 'turn_left'
                              [0, 20, 1]])    # 'turn_right'
 
@@ -104,7 +104,6 @@ def handler(speed, angle, time_delay):
 try:
     while True:
         # Send data
-        start_time = time.time()
         message_getState = bytes("0", "utf-8")
         s.sendall(message_getState)
         state_date = s.recv(100)
@@ -142,8 +141,10 @@ try:
                 visualize_img(traffic_sign_image, box)
                 if AREA_THRESHOLD[int(box[5])] < area:
                     if float(current_speed) > 40:
+                        print("Fast")
                         handler_speed, handler_angle, time_delay = HANDLER_VARIABLE_HIGH_SPEED[int(box[5])]
                     else:
+                        print("Low")
                         handler_speed, handler_angle, time_delay = HANDLER_VARIABLE_LOW_SPEED[int(box[5])]
                     handler(handler_speed, handler_angle, time_delay)
                     continue
@@ -180,7 +181,7 @@ try:
                 cv2.imshow("IMG", image)
                 cv2.waitKey(1)   
 
-            print("FPS: ", 1.0/(time.time() - start_time))
+           
 
 
 
