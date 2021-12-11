@@ -1,17 +1,24 @@
-import os
 import cv2
 import numpy as np
+
 from net import Net
 from src.util import adjust_fits, get_steer_angle, calcul_speed
 from src.parameters import Parameters
+from utils.connect import *
 
 net = Net()
 p = Parameters()
 net.load_model("dataset/golf_car.pkl")
 
-MAX_SPEED = 90
+MAX_SPEED = 50
 MAX_ANGLE = 25
+
+
+ser = startSerialCom()
+Car_ChangeMaxSpeed(ser, MAX_SPEED)
+
 cap = cv2.VideoCapture(0)
+
 
 while(cap.isOpened()):
     ret, frame = cap.read()
@@ -27,6 +34,8 @@ while(cap.isOpened()):
         image_points_result = net.get_image_points()
         angle = get_steer_angle(fits)
         predicted_speed = calcul_speed(angle, MAX_SPEED, MAX_ANGLE)
+        
+        Car_SetSpeedAngle(ser, predicted_speed, angle, 0)
 
         print("Angle: ", angle , " Speed: ", predicted_speed)
         cv2.imshow("frame", frame)
