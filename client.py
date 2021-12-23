@@ -27,7 +27,6 @@ sendBack_angle = 0
 sendBack_Speed = 0
 
 using_pid = True
-using_statistic = False
 using_visualization = False
 
 if using_pid:
@@ -39,24 +38,39 @@ if using_pid:
     pid.output_limits = (-25, 25)
 
 
-MAX_SPEED = 90
+MAX_SPEED = 100
 MAX_ANGLE = 25
 
 statistic_path = r'dataset/statistic'
 
 net = Net()
 p = Parameters()
-net.load_model(r'dataset/3_lane_better.pkl')
+net.load_model(r'dataset\lane.pkl')
 
 def Control(angle, speed):
     global sendBack_angle, sendBack_Speed
     sendBack_angle = angle
     sendBack_Speed = speed
 
-if using_statistic:
-    angle_buffer = []  
-    pid_angle_buffer = [] 
-    speed_buffer = []
+def avoid_left():
+    print("avoid_left")
+    for i in range(10, -16, -1):
+        print("angle: ", i)
+        send(i, 20)
+        time.sleep(0.06)
+
+def avoid_right():
+    print("avoid_right")
+    for i in range(-10, 16, 1):
+        send(i, 20)
+        time.sleep(0.06)
+
+def avoid_2right():
+    print("avoid_2right")
+    for i in range(-5, 8, 1):
+        send(i, 20)
+        time.sleep(0.18)
+
 
 class SimpleKalmanFilter:
   def __init__(self, mea_e, est_e, q):
@@ -75,42 +89,58 @@ class SimpleKalmanFilter:
 
 km = SimpleKalmanFilter(1, 5, 5)
 
-traffic_sign_model, _ = load_model(r'dataset/best.pt')
+traffic_sign_model, _ = load_model(r'C:\Users\Asus\Downloads\best_1_class.pt')
 
 save_img_dir = r'images_test'
-count = 336
+count = 0
 
-# 'do_not_go_straight', 'do_not_turn_left', 'do_not_turn_right', 'go_straight', 'turn_left', 'turn_right'
-AREA_THRESHOLD = np.array([3400, 2500, 3000, 3000, 3000, 3000])
+global instruction_count 
+instruction_count = 0
 
-HANDLER_VARIABLE_HIGH_SPEED = np.array([[0, 15, 1],        # 'do_not_go_straight'
-                             [10, 15, 1],        # 'do_not_turn_left'
-                             [10, -15, 1],       # 'do_not_turn_right'
-                             [50, 0, 2],        # 'go_straight'
-                             [-150, -24, 1],    # 'turn_left'
-                             [-150, 24, 1]])    # 'turn_right'
+#Speed_threshold = []
+
+INSTRUCTION = [["go_straight",3000, 50, 0, 0.6], ["turn_right", 2000, 0, 25, 1.55], \
+                ["turn_right", 2000, 0, 25, 1.5], ["turn_left", 2000, 0, -25, 1.5],\
+                ["turn_left_switch", 2100, 0, -14, 1.5], ["go_straight_left", 2000, 50, -1, 0.7],\
+                ["go_straight", 2000, 50, 0, 0.6], ["go_straight", 2000, 50, 0, 0.6], \
+                ["turn_left", 2000, 0, -25, 1.5], ["turn_right", 2000, 0, 25, 1.5],\
+                ["turn_right", 2000, 0, 25, 1.5], ["turn_right", 2000, 0, 25, 1.5],
+                ["left_object", 3000], ["right_object", 3000],  
+                ["left_object", 3000], ["right_2_object", 3000]]
+                
+                #  ["left_object", 0], \
+                # ["right_object", 0], ["left_object", 0], ["right_object", 0]]
 
 
-HANDLER_VARIABLE_LOW_SPEED = np.array([[20, 15, 1],        # 'do_not_go_straight'
-                             [20, 15, 1],        # 'do_not_turn_left'
-                             [20, -15, 1],       # 'do_not_turn_right'
-                             [50, 0.2, 1.5],        # 'go_straight'
-                             [0, -20, 1],    # 'turn_left'
-                             [0, 20, 1]])    # 'turn_right'
+SPEED_THRESHOLD = [70, 80, 80, 70, 80, 80, 80, 70, 60, 80, 60, 60, 60, 60, 60, 90]
 
+INSTRUCTION_OBJECT = [avoid_left, avoid_right, avoid_left, avoid_2right]
+
+def send(angle, speed):
+    message = bytes(f"1 {angle} {speed}", "utf-8")
+    s.sendall(message)
+    s.recv(100000)
 
 
 def handler(speed, angle, time_delay):
-    Control(angle , speed)
-    message = bytes(f"1 {sendBack_angle} {sendBack_Speed}", "utf-8")
-    s.sendall(message)
-    s.recv(100000)
-    time.sleep(time_delay)
+
+    if angle == 0:
+        angle = 1
+    time_delay = time_delay/np.abs(angle)
+
+    direction = -1 if angle < 0 else 1
+
+    for i in range(np.abs(angle)):
+        send(angle, speed)
+        time.sleep(time_delay)
+        angle -= direction * 1
+
+count = 1484
+img_dir = r'C:\Users\Asus\Desktop\UIT_CAR_RACING\fail_final\fail_image'
 
 try:
     while True:
         # Send data
-        start_time = time.time()
         message_getState = bytes("0", "utf-8")
         s.sendall(message_getState)
         state_date = s.recv(100)
@@ -128,44 +158,56 @@ try:
         data = s.recv(100000)
         
         try:
-            image = cv2.imdecode(np.frombuffer(data, np.uint8), -1)
+            image = cv2.imdecode(np.frombuffer(data, np.uint8), -1)        
+            if instruction_count < 12:   
+                traffic_sign_image = image[0: 140, 160 : 600]
+            else:
+                traffic_sign_image = image[100: 240, 160 : 600]
             
-            traffic_sign_image = image[0: 140, 160 : 600]
-
-            pred = detect(traffic_sign_image, traffic_sign_model, imgsz = (320, 320), conf_thres = 0.9  , iou_thres = 0.45)
+            pred = detect(traffic_sign_image, traffic_sign_model, imgsz = (320, 320), conf_thres = 0.8  , iou_thres = 0.45)
             boxes = get_boxes(pred)
-
-            
-            # if len(boxes) != 0 :
-            #     cv2.imwrite(os.path.join(save_img_dir, "traffic_" + str(count) + ".png"), traffic_sign_image)
-            #     count += 1
-
      
             confidence = 0 
             box = None
             area = 0
+            
+            if boxes != []:
+                img_path = os.path.join(img_dir, str(count) + "_object.png")
+                cv2.imwrite(img_path, traffic_sign_image)
+                count += 1
 
             for i, box in enumerate(boxes):
                 if box[4] > confidence:
                     box = box
                     confidence = box[4]
-
-            
-            if confidence != 0:
+       
+            if confidence != 0 and instruction_count < 12:
                 area = calculate_area(box)
                 print(area)
                 visualize_img(traffic_sign_image, box)
-                if AREA_THRESHOLD[int(box[5])] < area:
-                    if float(current_speed) > 40:
-                        handler_speed, handler_angle, time_delay = HANDLER_VARIABLE_HIGH_SPEED[int(box[5])]
-                    else:
-                        handler_speed, handler_angle, time_delay = HANDLER_VARIABLE_LOW_SPEED[int(box[5])]
+                if INSTRUCTION[instruction_count][1] < area:
+                    handler_speed, handler_angle, time_delay = INSTRUCTION[instruction_count][2:]
+                    print(INSTRUCTION[instruction_count][0])
+                    MAX_SPEED = SPEED_THRESHOLD[instruction_count]
+                    print("MAX_SPEED: ", MAX_SPEED)
+                    instruction_count += 1
+                    print("instruction_count: ", instruction_count)
                     handler(handler_speed, handler_angle, time_delay)
+            
                     continue
 
-            
+            elif confidence != 0 and instruction_count >= 12:   
+                area = calculate_area(box)
+                print(area)
+                visualize_img(traffic_sign_image, box)
+                if INSTRUCTION[instruction_count][1] < area:
+                    print("Object")
+                    avoid_function = INSTRUCTION_OBJECT[instruction_count - 12]
+                    avoid_function()
+                    MAX_SPEED = SPEED_THRESHOLD[instruction_count]
+                    print("MAX_SPEED: ", MAX_SPEED)
+                    instruction_count += 1
 
-            
 
             image = image[160: 340, :]
 
@@ -182,10 +224,8 @@ try:
 
             if using_pid:
                 out_pid = pid(-(angle))
-              
                 predicted_speed = calcul_speed(out_pid, MAX_SPEED, MAX_ANGLE)
                 speed = get_speed(out_pid, predicted_speed, float(current_speed), MAX_SPEED, area) 
-
                 out_pid = km.update(out_pid)
                 Control(out_pid ,speed)
 
@@ -194,15 +234,6 @@ try:
                 speed = get_speed(angle, predicted_speed, float(current_speed), MAX_SPEED, area)
                 Control(angle ,speed)
 
-            # print("current_speed, predicted_speed, speed: ", float(current_speed), predicted_speed, speed)
-            # print(angle, speed)
-
-            if using_statistic:
-                angle_buffer.append(angle)
-                speed_buffer.append(speed)
-                if using_pid:
-                    pid_angle_buffer.append(out_pid)
-
             if using_visualization:
                 cv2.imshow("traffic_sign_image", traffic_sign_image)
                 cv2.imshow("points", image_points_result)
@@ -210,32 +241,10 @@ try:
                 cv2.imshow("IMG", image)
                 cv2.waitKey(1)   
 
-            print("FPS: ", 1.0/(time.time() - start_time))
-
-
-
         except Exception as er:
             print(er)
             pass
-
-          
+    
 finally:
-
-    if using_statistic:
-        angle_buffer = np.array(angle_buffer)
-        pid_angle_buffer = np.array(pid_angle_buffer)
-        speed_buffer = np.array(speed_buffer)
-
-        if using_pid:
-            save_name = str(kp) + "_" + str(ki) + "_" + str(kd) + "_" + str(MAX_SPEED) + "_" 
-        else:
-            save_name = str(MAX_SPEED) + "_" 
-        save_name = save_name.replace('.', '-')
-        save_name = os.path.join(statistic_path, save_name)
-
-        np.save(save_name + 'angle.npy', angle_buffer)
-        np.save(save_name + 'pid_angle_buffer.npy', pid_angle_buffer)
-        np.save(save_name + 'speed_buffer.npy', speed_buffer)
-
     print('closing socket')
     s.close()

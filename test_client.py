@@ -3,7 +3,7 @@ import socket
 import cv2
 import numpy as np
 from utils.traffic_sign_general import *
-
+import os
 global sendBack_angle, sendBack_Speed, current_speed, current_angle
 sendBack_angle = 0
 sendBack_Speed = 0
@@ -26,11 +26,12 @@ def Control(angle, speed):
 
 
 
-
+count = 254
+img_dir = r'C:\Users\Asus\Desktop\UIT_CAR_RACING\final_image\Images'
 
 if __name__ == "__main__":
 
-    traffic_sign_model, _ = load_model('best.pt')
+    #traffic_sign_model, _ = load_model('best.pt')
 
     try:
         while True:
@@ -70,16 +71,19 @@ if __name__ == "__main__":
             
             try:
                 image = cv2.imdecode(np.frombuffer(data, np.uint8), -1)
-
-                line_image = image[160: 340, :]
-                
-                traffic_sign_image = image[0: 140, 100 : 540]
+           
+                traffic_sign_image = image[100: 240, 160 : 600]
 
 
-                pred = detect(traffic_sign_image, traffic_sign_model, imgsz = (320, 320), conf_thres = 0.7, iou_thres = 0.45)
-                boxes = get_boxes(pred)
-                for box in boxes:
-                    visualize_img(traffic_sign_image, box)
+                # pred = detect(traffic_sign_image, traffic_sign_model, imgsz = (320, 320), conf_thres = 0.7, iou_thres = 0.45)
+                # boxes = get_boxes(pred)
+                # for box in boxes:
+                #     visualize_img(traffic_sign_image, box)
+
+                img_path = os.path.join(img_dir, str(count) + ".png")
+                cv2.imwrite(img_path, traffic_sign_image)
+
+                count +=1
                 
                 cv2.imshow("traffic_sign_image", traffic_sign_image)
                 cv2.waitKey(1)   

@@ -10,10 +10,9 @@ from utils.general import non_max_suppression
 from models.experimental import attempt_load
 from utils.augmentations import letterbox
 
-COLOR_MAP_7_CLASS = ((255, 0 ,0), (255, 255, 0), (0, 255, 0), (0, 255, 255), (0, 0, 255),
-                      (125, 0, 100), (200, 100, 50))
+COLOR_MAP_7_CLASS = ((255, 0 ,0))
 
-CLASS_NAME = ['do_not_go_straight', 'do_not_turn_left', 'do_not_turn_right', 'go_straight', 'turn_left', 'turn_right', 'this_way_right']
+CLASS_NAME = ['signal']
 
 
 

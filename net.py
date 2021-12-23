@@ -74,7 +74,6 @@ class Net(object):
 
     def get_mask_lane(self, fits):
         warp = np.zeros_like(self.image)
-
         len_fit = fits.shape[0]
 
         if len_fit == 3:
@@ -95,6 +94,11 @@ class Net(object):
             pts = np.hstack((pts_left, pts_right))
             cv2.fillPoly(warp, np.int_([pts]), (int(color[0]),int(color[1]),int(color[2])))
         
+        if len_fit >= 2:
+            y = 80
+            x = int((np.poly1d(fits[-1])(y) + np.poly1d(fits[-2])(y)) // 2)
+            warp = cv2.circle(warp, (x, y), 1, (255, 255, 0), 4)
+
         self.mask = cv2.warpPerspective(warp, p.inverse_perspective_transform, (warp.shape[1], warp.shape[0]))
         return self.mask
 

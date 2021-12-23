@@ -73,7 +73,7 @@ class Parameters():
 
     # expand
 
-    point_in_lane = 0
+    point_in_lane = [0,0]
     source_points = np.float32([
     [0, y_size],
     [0, (5/9)*y_size],
