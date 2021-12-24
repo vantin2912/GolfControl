@@ -27,7 +27,7 @@ sendBack_angle = 0
 sendBack_Speed = 0
 
 using_pid = True
-using_visualization = True
+using_visualization = False
 
 if using_pid:
     kp = 3
@@ -53,23 +53,50 @@ def Control(angle, speed):
     sendBack_Speed = speed
 
 def avoid_left():
-    print("avoid_left")
-    for i in range(10, -16, -1):
-        print("angle: ", i)
+    #print("avoid_left")
+    for i in range(10, 0, -1):
+        #print("angle: ", i)
         send(i, 20)
         time.sleep(0.06)
+
+    for i in range(1, -16, -1):
+        #print("angle: ", i)
+        send(i, 20)
+        time.sleep(0.03)
+
+    for i in range(-13, 10, 1):
+        send(i, 20)
+        time.sleep(0.03)
 
 def avoid_right():
-    print("avoid_right")
-    for i in range(-10, 16, 1):
+    #print("avoid_right")
+    for i in range(-10, 0, 1):
         send(i, 20)
         time.sleep(0.06)
 
-def avoid_2right():
-    print("avoid_2right")
-    for i in range(-5, 10, 1):
+    for i in range(0, 16, 1):
         send(i, 20)
-        time.sleep(0.18)
+        time.sleep(0.03)
+
+    for i in range(13, -10, -2):
+        send(i, 20)
+        time.sleep(0.03)
+
+        
+
+def avoid_2right():
+    #print("avoid_2right")
+    for i in range(-5, 0, 1):
+        send(i, 20)
+        time.sleep(0.17)
+
+    for i in range(-0, 10, 1):
+        send(i, 20)
+        time.sleep(0.1)
+
+    for i in range(10, -4, -1):
+        send(i, 20)
+        time.sleep(0.03)
 
 
 class SimpleKalmanFilter:
@@ -100,7 +127,7 @@ instruction_count = 0
 #Speed_threshold = []
 
 INSTRUCTION = [["go_straight",3000, 50, 0, 0.6], ["turn_right", 2000, 20, 25, 1.55], \
-                ["turn_right", 2000, 20, 25, 1.46], ["turn_left", 2000, 20, -25, 1.467],\
+                ["turn_right", 2000, 20, 25, 1.4], ["turn_left", 2000, 20, -25, 1.467],\
                 ["turn_left_switch", 2100, 0, -14, 1.5], ["go_straight_left", 2000, 50, -1, 0.8],\
                 ["go_straight", 2000, 50, 0, 0.8], ["go_straight", 2000, 50, 0, 0.85], \
                 ["turn_left", 2200, 20, -25, 1.5], ["turn_right", 2000, 0, 25, 1.5],\
@@ -125,7 +152,7 @@ def turn_left_switch():
     send(0, 0)
     time.sleep(0.46)
     angle = -25
-    time_delay = 1.7/np.abs(angle)
+    time_delay = 1.6/np.abs(angle)
     for i in range(np.abs(angle)):
         send(angle, 0)
         time.sleep(time_delay)
@@ -262,7 +289,7 @@ try:
                 cv2.waitKey(1)   
 
         except Exception as er:
-            print(er)
+            print("Sup bitch")
             pass
     
 finally:
