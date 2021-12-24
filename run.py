@@ -54,7 +54,7 @@ def Thread_AI():
 
             speed = int(calcul_speed(angle, MAX_SPEED, MAX_ANGLE)) 
             speed_ratio = speed/MAX_SPEED
-            predicted_speed = speed_ratio * 5 + 60
+            predicted_speed = speed_ratio * 5 + 56
 
             cv2.imshow("frame", frame)
             cv2.imshow("mask", mask)
@@ -131,12 +131,12 @@ def init_thread():
 if __name__ == "__main__":
     net = Net()
     p = Parameters()
-    net.load_model(r"C:\Users\Asus\Downloads\best.pkl")
+    net.load_model(r"dataset\15_epoch.pkl")
     # dataset\4_epoch.pkl
     # dataset\15_epoch.pkl
 
     km = SimpleKalmanFilter(1, 5, 5)
-    kp = 0.5
+    kp = 0.7
     ki = 0
     kd = 0.1
 

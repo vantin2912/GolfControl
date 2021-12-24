@@ -71,6 +71,18 @@ def avoid_2right():
         time.sleep(0.18)
 
 
+def go_straight_left():
+    send(0, 0)
+    time.sleep(0.8)
+    angle = 25
+    for i in range(np.abs(angle)):
+        send(angle, 0)
+        time.sleep(time_delay)
+        angle -= 1
+
+
+
+
 class SimpleKalmanFilter:
   def __init__(self, mea_e, est_e, q):
     self.mea_e = mea_e

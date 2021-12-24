@@ -49,5 +49,5 @@ ser = startSerialCom()
 Car_ChangeMaxSpeed(ser, 100)
 
 while True:
-    Car_SetSpeedAngle(ser, 0, 0, 0)
+    Car_SetSpeedAngle(ser, 0, 7, 0)
     time.sleep(0.1)

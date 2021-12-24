@@ -143,14 +143,14 @@ def get_steer_angle(fits):
     
 
     elif len_fit >= 2:
-        #y = 20
-        y = 120
-        x = (np.poly1d(fits[-1])(y) + np.poly1d(fits[-2])(y)) // 2 + 30
+        y = 20
+        #y = 120
+        x = (np.poly1d(fits[-1])(y) + np.poly1d(fits[-2])(y)) // 2 
         return_value = errorAngle((x,y))
         
         #update point in lane
         temp_y = 255
-        temp_x = (np.poly1d(fits[-1])(temp_y) + np.poly1d(fits[-2])(temp_y)) // 2 
+        temp_x = (np.poly1d(fits[-1])(temp_y) + np.poly1d(fits[-2])(temp_y)) // 2
         p.point_in_lane = (temp_x,temp_y)
         
         return return_value
