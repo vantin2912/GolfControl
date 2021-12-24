@@ -132,6 +132,9 @@ if __name__ == "__main__":
     net = Net()
     p = Parameters()
     net.load_model(r"C:\Users\Asus\Downloads\best.pkl")
+    # dataset\4_epoch.pkl
+    # dataset\15_epoch.pkl
+
     km = SimpleKalmanFilter(1, 5, 5)
     kp = 0.5
     ki = 0
