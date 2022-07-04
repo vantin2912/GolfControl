@@ -5,10 +5,6 @@ import keyboard
 import threading
 import os
 
-from simple_pid import PID
-from net import Net
-from src.util import adjust_fits, get_steer_angle, calcul_speed
-from src.parameters import Parameters
 from utils.connect import Connection
 from utils.controller import Controller
 
@@ -70,7 +66,7 @@ def Thread_AI():
 def Thread_read_key_board():
     global MODE
     global DONE
-    while cap.isOpened() and not DONE:
+    while not DONE:
         if MODE == 1:
             print("Car controller: ", car_controller.get_info())
             if keyboard.is_pressed('space') :
@@ -107,45 +103,37 @@ def Thread_read_key_board():
             MODE = 1
             car_controller.brake()  
 
-        if keyboard.is_pressed('tab'):
-            print("HRERERERE")
-            if MODE == 1:
-                MODE = 0     
-            else:          
-                MODE = 1
-                car_controller.brake()  
-
         if keyboard.is_pressed('esc'):
             DONE = True
 
         time.sleep(0.08)
 
 def init_thread():
-    main_ThreadAI = threading.Thread(target= Thread_AI)
+    # main_ThreadAI = threading.Thread(target= Thread_AI)
     main_ThreadKeyBoard = threading.Thread(target= Thread_read_key_board)
 
-    main_ThreadAI.start()
+    # main_ThreadAI.start()
     main_ThreadKeyBoard.start()
 
 
 if __name__ == "__main__":
-    net = Net()
-    p = Parameters()
-    net.load_model(r"dataset\15_epoch.pkl")
+    # net = Net()
+    # p = Parameters()
+    # net.load_model(r"dataset\15_epoch.pkl")
     # dataset\4_epoch.pkl
     # dataset\15_epoch.pkl
 
-    km = SimpleKalmanFilter(1, 5, 5)
-    kp = 0.7
-    ki = 0
-    kd = 0.1
+    # km = SimpleKalmanFilter(1, 5, 5)
+    # kp = 0.7
+    # ki = 0
+    # kd = 0.1
 
-    pid = PID(kp, ki, kd, setpoint= 0)
-    pid.output_limits = (-25, 25)
+    # pid = PID(kp, ki, kd, setpoint= 0)
+    # pid.output_limits = (-25, 25)
 
     MAX_SPEED = 100
     MAX_ANGLE = 25
-    cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture(0)
     #cap = cv2.VideoCapture(r'C:\Users\Asus\Desktop\DoAnCV\video\test_video_2.mp4')
     global count
     count = 0
@@ -153,17 +141,9 @@ if __name__ == "__main__":
     DONE = False
 
     global MODE
-    MODE = 0
-    print("We are currently using AI mode")
-    print("Press tab to switch to hand mode, else to bypass")
+    MODE = 1
 
-    if keyboard.read_key('tab'):
-        if MODE == 1:
-            MODE = 0        
-        else:
-            MODE = 1
-
-    connector = Connection("COM8", 115200, False)
+    connector = Connection("COM8", 115200, False) ## false để gửi, True test k cần uart 
     connector.Car_ChangeMaxSpeed(100)
 
     car_controller = Controller(connector)
